@@ -1,0 +1,327 @@
+<html><head></head><body><div class="apidocDiv">
+<style>
+/*csslint
+*/
+.apidocDiv {
+    background: #fff;
+    font-family: Arial, Helvetica, sans-serif;
+}
+.apidocDiv a[href] {
+    color: #33f;
+    font-weight: bold;
+    text-decoration: none;
+}
+.apidocDiv a[href]:hover {
+    text-decoration: underline;
+}
+.apidocCodeCommentSpan {
+    background: #bbf;
+    color: #000;
+    display: block;
+}
+.apidocCodeKeywordSpan {
+    color: #d00;
+    font-weight: bold;
+}
+.apidocCodePre {
+    background: #eef;
+    border: 1px solid;
+    color: #777;
+    padding: 5px;
+    white-space: pre-wrap;
+}
+.apidocFooterDiv {
+    margin-top: 20px;
+    text-align: center;
+}
+.apidocModuleLi {
+    margin-top: 10px;
+}
+.apidocSectionDiv {
+    border-top: 1px solid;
+    margin-top: 20px;
+}
+.apidocSignatureSpan {
+    color: #777;
+    font-weight: bold;
+}
+</style>
+<h1>api documentation for
+    <a href="https://github.com/facebook/esprima/tree/fb-harmony">esprima-fb (v15001.1001.0-dev-harmony-fb)</a>
+</h1>
+<h4>Facebook-specific fork of the esprima project</h4>
+<div class="apidocSectionDiv"><a href="#apidoc.tableOfContents" id="apidoc.tableOfContents"><h1>table of contents</h1></a><ol>
+
+    <li class="apidocModuleLi"><a href="#apidoc.module.esprima-fb">module esprima-fb</a><ol>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.element.esprima-fb.parse">
+            function <span class="apidocSignatureSpan">esprima-fb.</span>parse
+            <span class="apidocSignatureSpan">(code, options)</span>
+            </a>
+
+        </li>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.element.esprima-fb.tokenize">
+            function <span class="apidocSignatureSpan">esprima-fb.</span>tokenize
+            <span class="apidocSignatureSpan">(code, options)</span>
+            </a>
+
+        </li>
+
+        <li>
+
+            <span class="apidocSignatureSpan">object <span class="apidocSignatureSpan">esprima-fb.</span>Syntax</span>
+
+        </li>
+
+        <li>
+
+            <span class="apidocSignatureSpan">string <span class="apidocSignatureSpan">esprima-fb.</span>version</span>
+
+        </li>
+
+    </ol></li>
+
+</ol></div>
+
+<div class="apidocSectionDiv">
+<h1><a href="#apidoc.module.esprima-fb" id="apidoc.module.esprima-fb">module esprima-fb</a></h1>
+
+
+    <h2>
+        <a href="#apidoc.element.esprima-fb.parse" id="apidoc.element.esprima-fb.parse">
+        function <span class="apidocSignatureSpan">esprima-fb.</span>parse
+        <span class="apidocSignatureSpan">(code, options)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">function parse(code, options) {
+    var program, toString;
+
+    toString = String;
+    if (typeof code !== 'string' &amp;&amp; !(code instanceof String)) {
+        code = toString(code);
+    }
+
+    delegate = SyntaxTreeDelegate;
+    source = code;
+    index = 0;
+    lineNumber = (source.length &gt; 0) ? 1 : 0;
+    lineStart = 0;
+    length = source.length;
+    lookahead = null;
+    state = {
+        allowKeyword: false,
+        allowIn: true,
+        labelSet: new StringMap(),
+        parenthesizedCount: 0,
+        inFunctionBody: false,
+        inIteration: false,
+        inSwitch: false,
+        inJSXChild: false,
+        inJSXTag: false,
+        inType: false,
+        lastCommentStart: -1,
+        yieldAllowed: false,
+        awaitAllowed: false,
+        curlyPosition: 0,
+        curlyStack: [],
+        curlyLastIndex: 0
+    };
+
+    extra = {};
+    if (typeof options !== 'undefined') {
+        extra.range = (typeof options.range === 'boolean') &amp;&amp; options.range;
+        extra.loc = (typeof options.loc === 'boolean') &amp;&amp; options.loc;
+        extra.attachComment = (typeof options.attachComment === 'boolean') &amp;&amp; options.attachComment;
+
+        if (extra.loc &amp;&amp; options.source !== null &amp;&amp; options.source !== undefined) {
+            delegate = extend(delegate, {
+                'postProcess': function (node) {
+                    node.loc.source = toString(options.source);
+                    return node;
+                }
+            });
+        }
+
+        extra.sourceType = options.sourceType;
+        if (typeof options.tokens === 'boolean' &amp;&amp; options.tokens) {
+            extra.tokens = [];
+        }
+        if (typeof options.comment === 'boolean' &amp;&amp; options.comment) {
+            extra.comments = [];
+        }
+        if (typeof options.tolerant === 'boolean' &amp;&amp; options.tolerant) {
+            extra.errors = [];
+        }
+        if (extra.attachComment) {
+            extra.range = true;
+            extra.comments = [];
+            extra.bottomRightStack = [];
+            extra.trailingComments = [];
+            extra.leadingComments = [];
+        }
+    }
+
+    patch();
+    try {
+        program = parseProgram();
+        if (typeof extra.comments !== 'undefined') {
+            program.comments = extra.comments;
+        }
+        if (typeof extra.tokens !== 'undefined') {
+            filterTokenLocation();
+            program.tokens = extra.tokens;
+        }
+        if (typeof extra.errors !== 'undefined') {
+            program.errors = extra.errors;
+        }
+    } catch (e) {
+        throw e;
+    } finally {
+        unpatch();
+        extra = {};
+    }
+
+    return program;
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">...
+if (typeof fname !== 'string') {
+    console.log('Error: no input file.');
+    process.exit(1);
+}
+
+try {
+    content = fs.readFileSync(fname, 'utf-8');
+    syntax = esprima.<span class="apidocCodeKeywordSpan">parse</span>(content, options);
+    console.log(JSON.stringify(syntax, null, 4));
+} catch (e) {
+    console.log('Error: ' + e.message);
+    process.exit(1);
+}
+...</pre></li>
+    </ul>
+
+
+
+    <h2>
+        <a href="#apidoc.element.esprima-fb.tokenize" id="apidoc.element.esprima-fb.tokenize">
+        function <span class="apidocSignatureSpan">esprima-fb.</span>tokenize
+        <span class="apidocSignatureSpan">(code, options)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">function tokenize(code, options) {
+    var toString,
+        token,
+        tokens;
+
+    toString = String;
+    if (typeof code !== 'string' &amp;&amp; !(code instanceof String)) {
+        code = toString(code);
+    }
+
+    delegate = SyntaxTreeDelegate;
+    source = code;
+    index = 0;
+    lineNumber = (source.length &gt; 0) ? 1 : 0;
+    lineStart = 0;
+    length = source.length;
+    lookahead = null;
+    state = {
+        allowKeyword: true,
+        allowIn: true,
+        labelSet: new StringMap(),
+        inFunctionBody: false,
+        inIteration: false,
+        inSwitch: false,
+        lastCommentStart: -1,
+        curlyStack: [],
+        curlyLastIndex: 0
+    };
+
+    extra = {};
+
+    // Options matching.
+    options = options || {};
+
+    // Of course we collect tokens here.
+    options.tokens = true;
+    extra.tokens = [];
+    extra.tokenize = true;
+    // The following two fields are necessary to compute the Regex tokens.
+    extra.openParenToken = -1;
+    extra.openCurlyToken = -1;
+
+    extra.range = (typeof options.range === 'boolean') &amp;&amp; options.range;
+    extra.loc = (typeof options.loc === 'boolean') &amp;&amp; options.loc;
+
+    if (typeof options.comment === 'boolean' &amp;&amp; options.comment) {
+        extra.comments = [];
+    }
+    if (typeof options.tolerant === 'boolean' &amp;&amp; options.tolerant) {
+        extra.errors = [];
+    }
+
+    patch();
+
+    try {
+        peek();
+        if (lookahead.type === Token.EOF) {
+            return extra.tokens;
+        }
+
+        token = lex();
+        while (lookahead.type !== Token.EOF) {
+            try {
+                token = lex();
+            } catch (lexError) {
+                token = lookahead;
+                if (extra.errors) {
+                    extra.errors.push(lexError);
+                    // We have to break on the first error
+                    // to avoid infinite loops.
+                    break;
+                } else {
+                    throw lexError;
+                }
+            }
+        }
+
+        filterTokenLocation();
+        tokens = extra.tokens;
+        if (typeof extra.comments !== 'undefined') {
+            tokens.comments = extra.comments;
+        }
+        if (typeof extra.errors !== 'undefined') {
+            tokens.errors = extra.errors;
+        }
+    } catch (e) {
+        throw e;
+    } finally {
+        unpatch();
+        extra = {};
+    }
+    return tokens;
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">n/a</pre></li>
+    </ul>
+
+
+
+
+
+
+</div>
+
+<div class="apidocFooterDiv">
+    [ this document was created with
+    <a href="https://github.com/kaizhu256/node-utility2" target="_blank">utility2</a>
+    ]
+</div>
+</div>
+</body></html>
